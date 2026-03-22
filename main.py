@@ -7,13 +7,13 @@ import pystray
 from api import ExplorerAPI
 
 def resource_path(relative_path):
-    """Get correct resource path for both dev and PyInstaller"""
+    """获取资源文件的正确路径（开发环境或 PyInstaller 打包后）"""
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
 
 def run_tray_icon(window):
-    """Run system tray icon"""
+    """运行系统托盘图标"""
     try:
         icon_path = resource_path("icon.ico")
         icon_image = Image.open(icon_path)
@@ -46,24 +46,14 @@ def run_tray_icon(window):
 
 if __name__ == '__main__':
     api = ExplorerAPI()
-    
-    # Load HTML
+
+    # 获取 HTML 文件的正确路径（开发环境或打包后）
     html_path = resource_path("index.html")
-    try:
-        with open(html_path, encoding="utf-8") as f:
-            html_content = f.read()
-    except FileNotFoundError:
-        print(f"Error: index.html not found at {html_path}")
-        print(f"Current dir: {os.getcwd()}")
-        print(f"__file__: {__file__}")
-        if hasattr(sys, '_MEIPASS'):
-            print(f"_MEIPASS: {sys._MEIPASS}")
-        input("Press Enter to exit...")
-        sys.exit(1)
-    
+
+    # 创建窗口，直接使用本地文件路径（自动加载外部 CSS/JS）
     window = webview.create_window(
         'Goose Manager',
-        html=html_content,
+        url=html_path,          # 使用 url 参数传入本地文件路径
         js_api=api,
         width=1000,
         height=700,
@@ -71,14 +61,15 @@ if __name__ == '__main__':
         min_size=(800, 500),
     )
 
-    # Hide to tray on close
+    # 关闭窗口时隐藏到托盘（不退出）
     def on_closing():
         window.hide()
         return False
     window.events.closing += on_closing
 
-    # Start tray icon in separate thread
+    # 在独立线程中启动托盘图标
     tray_thread = threading.Thread(target=run_tray_icon, args=(window,), daemon=True)
     tray_thread.start()
 
+    # 启动主窗口
     webview.start()

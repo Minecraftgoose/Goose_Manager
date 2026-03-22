@@ -1,0 +1,575 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Goose Manager - 现代化文件管理器 | 动态壁纸 & 巨幕预览</title>
+     <link rel="icon" href="icon.ico" type="image/x-icon">
+    <!-- Font Awesome 5 (降级至v5，完全兼容) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            color: #eef4ff;
+            line-height: 1.5;
+            background-color: #0a0c14;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        html {
+            overflow-x: hidden;
+        }
+
+        /* 动态必应壁纸背景层 */
+        #bgLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            transition: opacity 1.2s ease-in-out;
+            opacity: 0;
+            z-index: 0;
+            filter: brightness(1.2) saturate(1.05);
+        }
+        #bgLayer.loaded {
+            opacity: 1;
+        }
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 12, 22, 0);
+            backdrop-filter: blur(2px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 容器 */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(20, 30, 45, 0.55);
+            backdrop-filter: blur(14px);
+            border-radius: 2rem;
+            padding: 2rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #fff, #8ab4f8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h1 i {
+            font-size: 2.8rem;
+            background: none;
+            color: #8ab4f8;
+        }
+
+        .sub {
+            color: #e0edff;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #8ab4f8;
+            padding-left: 1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2.5rem 0;
+        }
+
+        .feature-card {
+            background: rgba(20, 28, 40, 0.7);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(4px);
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 6px 12px -6px rgba(0,0,0,0.3);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(35, 45, 65, 0.8);
+            border-color: rgba(138, 180, 248, 0.6);
+        }
+
+        .feature-icon {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #8ab4f8;
+            display: inline-block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card p {
+            color: #d9e3ff;
+            font-size: 0.95rem;
+        }
+
+        /* ========= 巨幕截图区 ========= */
+        .screenshot-section {
+            margin: 4rem 0 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            border-left: 5px solid #8ab4f8;
+            padding-left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            font-size: 1.8rem;
+            color: #8ab4f8;
+        }
+
+        .screenshot-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            width: 100%;
+        }
+
+        .screenshot-card {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 2rem;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transform: translateX(0);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2), transform 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+        }
+
+        .screenshot-card:nth-child(odd) {
+            transform: translateX(-80px);
+        }
+        .screenshot-card:nth-child(even) {
+            transform: translateX(80px);
+        }
+
+        @media (min-width: 768px) {
+            .screenshot-card:nth-child(odd) {
+                transform: translateX(-160px);
+            }
+            .screenshot-card:nth-child(even) {
+                transform: translateX(160px);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .screenshot-card:nth-child(odd) {
+                transform: translateX(-320px);
+            }
+            .screenshot-card:nth-child(even) {
+                transform: translateX(320px);
+            }
+        }
+
+        @media (min-width: 1800px) {
+            .screenshot-card:nth-child(odd) {
+                transform: translateX(-520px);
+            }
+            .screenshot-card:nth-child(even) {
+                transform: translateX(520px);
+            }
+        }
+
+        .screenshot-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .screenshot-card:hover {
+            transform: scale(1.01) translateY(-8px);
+            box-shadow: 0 30px 45px -15px black;
+            border-color: rgba(138, 180, 248, 0.8);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #0f172a;
+            object-fit: cover;
+            aspect-ratio: 21 / 10; 
+            transition: transform 0.5s ease;
+        }
+        
+        .screenshot-card:hover img {
+            transform: scale(1.02);
+        }
+
+        .caption {
+            padding: 1.2rem 1rem;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            background: rgba(5, 10, 20, 0.7);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(138, 180, 248, 0.5);
+        }
+        
+        .caption i {
+            margin-right: 10px;
+            color: #8ab4f8;
+            font-size: 1.2rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin: 2rem 0;
+        }
+
+        .tech-tag {
+            background: rgba(138, 180, 248, 0.2);
+            border-radius: 2rem;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid rgba(138, 180, 248, 0.5);
+            backdrop-filter: blur(2px);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #8ab4f8;
+            color: #0b0e16;
+            font-weight: 700;
+            padding: 0.9rem 2.4rem;
+            border-radius: 3rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(138, 180, 248, 0.4);
+            font-size: 1.1rem;
+        }
+
+        .download-btn i {
+            margin-right: 0.5rem;
+        }
+
+        .download-btn:hover {
+            background: #aac6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(138, 180, 248, 0.6);
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #cbd5f0;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 2rem;
+        }
+
+        a {
+            color: #b6d0ff;
+            text-decoration: none;
+        }
+
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+                margin: 0 0.8rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .section-title {
+                font-size: 1.6rem;
+            }
+            .screenshot-grid {
+                gap: 2rem;
+            }
+            .screenshot-card:nth-child(odd),
+            .screenshot-card:nth-child(even) {
+                transform: translateX(-60px);
+            }
+            .screenshot-card:nth-child(even) {
+                transform: translateX(60px);
+            }
+            .screenshot-card.visible {
+                transform: translateX(0);
+            }
+            .caption {
+                font-size: 0.85rem;
+            }
+            .screenshot-card img {
+                aspect-ratio: 4 / 3;
+            }
+        }
+
+        @media (max-width: 768px) and (min-width: 481px) {
+            .screenshot-card:nth-child(odd) {
+                transform: translateX(-120px);
+            }
+            .screenshot-card:nth-child(even) {
+                transform: translateX(120px);
+            }
+            .screenshot-card img {
+                aspect-ratio: 16 / 9;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="bgLayer"></div>
+<div class="bg-overlay"></div>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <h1>
+            <i class="fas fa-feather-alt"></i> Goose Manager
+        </h1>
+    </div>
+    <div class="sub">
+        <i class="fas fa-star-of-life" style="margin-right: 0.5rem;"></i> 轻量 · 美观 · 高效 
+    </div>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-copy"></i></div>
+            <h3><i class="fas fa-copy"></i> 多标签页</h3>
+            <p>像浏览器一样管理多个文件夹，切换自如，工作流更顺畅。支持独立历史记录与标签拖拽排序。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-mouse-pointer"></i></div>
+            <h3><i class="fas fa-mouse-pointer"></i> 双视图 + 拖拽</h3>
+            <p>列表/图标视图一键切换，支持鼠标框选、文件拖拽移动/复制。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-palette"></i></div>
+            <h3><i class="fas fa-palette"></i> 个性化定制</h3>
+            <p>深浅主题、必应每日壁纸、自定义图片背景，动画速度与缓动随心调。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-keyboard"></i></div>
+            <h3><i class="fas fa-keyboard"></i> 全键盘操作</h3>
+            <p>Ctrl+C/V/X、Delete、F2、Ctrl+A… 无需鼠标也能高效管理。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-window-restore"></i></div>
+            <h3><i class="fas fa-window-restore"></i> 系统托盘常驻</h3>
+            <p>关闭窗口自动隐藏到托盘，不打扰，需要时一键唤醒。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+            <h3><i class="fas fa-chart-line"></i> 流畅动画</h3>
+            <p>分片渲染大文件夹，过渡动画可调节，视觉与性能兼顾。</p>
+        </div>
+    </div>
+
+    <!-- 巨幕 -->
+    <div class="screenshot-section">
+        <div class="section-title">
+            <i class="fas fa-camera"></i> 软件截图
+        </div>
+        <div class="screenshot-grid" id="screenshotGrid">
+            <div class="screenshot-card" data-scroll-trigger>
+                <img src="1.webp" alt="标准界面">
+                <div class="caption"><i class="fas fa-desktop"></i> 标准界面</div>
+            </div>
+            <div class="screenshot-card" data-scroll-trigger>
+                <img src="2.webp" alt="关于">
+                <div class="caption"><i class="fas fa-sliders-h"></i> 关于</div>
+            </div>
+            <div class="screenshot-card" data-scroll-trigger>
+                <img src="3.webp" alt="动画深度定制">
+                <div class="caption"><i class="fas fa-folder-open"></i> 动画深度定制</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">
+        <i class="fas fa-cogs"></i> 技术栈
+    </div>
+    <div class="tech-stack">
+        <span class="tech-tag"><i class="fab fa-python"></i> Python 3.8.10</span>
+        <span class="tech-tag"><i class="fas fa-window-maximize"></i> pywebview</span>
+        <span class="tech-tag"><i class="fas fa-tray"></i> pystray</span>
+        <span class="tech-tag"><i class="fas fa-image"></i> Pillow</span>
+        <span class="tech-tag"><i class="fas fa-cloud-download-alt"></i> requests</span>
+        <span class="tech-tag"><i class="fab fa-html5"></i> HTML5/CSS3/JS</span>
+        <span class="tech-tag"><i class="fas fa-palette"></i> 必应壁纸引擎</span>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="https://github.com/Minecraftgoose/Goose_Manager/releases/tag/v1.1.0" class="download-btn" target="_blank">
+            <i class="fas fa-download"></i> 前往下载页 v1.1.0
+        </a>
+        <p style="font-size: 0.8rem; margin-top: 0.8rem;"><i class="fas fa-shield-alt"></i> 开源免费</p>
+    </div>
+
+    <footer>
+        <p><i class="far fa-copyright"></i> 2026 Minecraft_goose </p>
+        <p>如果你从非官方渠道付费获得此软件，请立即退款。</p>
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // ======================= 必应壁纸动态背景 =======================
+        function setBingWallpaper() {
+            const bgLayer = document.getElementById('bgLayer');
+            if (!bgLayer) return;
+            const timestamp = new Date().getTime();
+            const wallpaperUrl = `https://bing.img.run/uhd.php?t=${timestamp}`;
+            
+            const img = new Image();
+            img.onload = function() {
+                bgLayer.style.backgroundImage = `url('${wallpaperUrl}')`;
+                bgLayer.classList.add('loaded');
+                bgLayer.style.opacity = '1';
+            };
+            img.onerror = function() {
+                const fallbackUrl = `https://api.yviii.com/bing/uhd.php?t=${timestamp}`;
+                const fallbackImg = new Image();
+                fallbackImg.onload = function() {
+                    bgLayer.style.backgroundImage = `url('${fallbackUrl}')`;
+                    bgLayer.classList.add('loaded');
+                    bgLayer.style.opacity = '1';
+                };
+                fallbackImg.onerror = function() {
+                    bgLayer.style.backgroundImage = `linear-gradient(125deg, #0f172a, #1e293b)`;
+                    bgLayer.classList.add('loaded');
+                    bgLayer.style.opacity = '1';
+                };
+                fallbackImg.src = fallbackUrl;
+            };
+            img.src = wallpaperUrl;
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setBingWallpaper);
+        } else {
+            setBingWallpaper();
+        }
+        setInterval(setBingWallpaper, 24 * 60 * 60 * 1000);
+        
+        // ======================= 巨幕图片滚动飞入动画  =======================
+        function initScrollFlyIn() {
+            const cards = document.querySelectorAll('.screenshot-card');
+            if (!cards.length) return;
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { 
+                threshold: 0.2,     
+                rootMargin: "0px 0px -20px 0px"
+            });
+            
+            cards.forEach(card => {
+                card.classList.remove('visible');
+                observer.observe(card);
+            });
+
+            setTimeout(() => {
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const winHeight = window.innerHeight || document.documentElement.clientHeight;
+                    if (rect.top < winHeight - 70 && rect.bottom > 50) {
+                        if (!card.classList.contains('visible')) {
+                            card.classList.add('visible');
+                            observer.unobserve(card);
+                        }
+                    }
+                });
+            }, 150);
+        }
+        
+        window.addEventListener('load', () => {
+            initScrollFlyIn();
+        });
+
+        let scrollTimer = null;
+        window.addEventListener('scroll', () => {
+            if (scrollTimer) return;
+            scrollTimer = requestAnimationFrame(() => {
+                const hiddenCards = document.querySelectorAll('.screenshot-card:not(.visible)');
+                hiddenCards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const winHeight = window.innerHeight || document.documentElement.clientHeight;
+                    if (rect.top < winHeight - 50 && rect.bottom > 30) {
+                        card.classList.add('visible');
+                    }
+                });
+                scrollTimer = null;
+            });
+        });
+        
+        window.addEventListener('resize', () => {
+            const hiddenCards = document.querySelectorAll('.screenshot-card:not(.visible)');
+            hiddenCards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const winHeight = window.innerHeight || document.documentElement.clientHeight;
+                if (rect.top < winHeight - 60 && rect.bottom > 40) {
+                    card.classList.add('visible');
+                }
+            });
+        });
+
+    })();
+</script>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Goose Manager - 现代化文件管理器 | 动态壁纸 & 巨幕预览</title>
+    <title>Goose Manager</title>
      <link rel="icon" href="icon.ico" type="image/x-icon">
-    <!-- Font Awesome 5 (降级至v5，完全兼容) -->
+    <!-- Font Awesome 5 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         * {
@@ -37,7 +37,7 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            transition: opacity 1.2s ease-in-out;
+            transition: opacity 1.2 ease-in-out;
             opacity: 0;
             z-index: 0;
             filter: brightness(1.2) saturate(1.05);
@@ -69,7 +69,7 @@
             padding: 2rem 2rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            transition: all 0.3 ease;
         }
 
         h1 {
@@ -112,7 +112,7 @@
             border-radius: 1.5rem;
             padding: 1.5rem;
             backdrop-filter: blur(4px);
-            transition: all 0.25s ease;
+            transition: all 0.25 ease;
             border: 1px solid rgba(255, 255, 255, 0.12);
             box-shadow: 0 6px 12px -6px rgba(0,0,0,0.3);
         }
@@ -177,13 +177,13 @@
             background: rgba(0, 0, 0, 0.6);
             border-radius: 2rem;
             overflow: hidden;
-            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.4s ease;
+            transition: transform 0.4 cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.4 ease;
             border: 1px solid rgba(255, 255, 255, 0.3);
             backdrop-filter: blur(6px);
             box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
             opacity: 0;
             transform: translateX(0);
-            transition: opacity 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2), transform 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+            transition: opacity 0.8 cubic-bezier(0.2, 0.9, 0.3, 1.2), transform 0.8 cubic-bezier(0.2, 0.9, 0.3, 1.2);
         }
 
         .screenshot-card:nth-child(odd) {
@@ -238,7 +238,7 @@
             background: #0f172a;
             object-fit: cover;
             aspect-ratio: 21 / 10; 
-            transition: transform 0.5s ease;
+            transition: transform 0.5 ease;
         }
         
         .screenshot-card:hover img {
@@ -290,7 +290,7 @@
             padding: 0.9rem 2.4rem;
             border-radius: 3rem;
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.2;
             margin-top: 1rem;
             box-shadow: 0 4px 12px rgba(138, 180, 248, 0.4);
             font-size: 1.1rem;

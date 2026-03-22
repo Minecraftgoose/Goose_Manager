@@ -1,4 +1,4 @@
-﻿import base64
+import base64
 import os
 import shutil
 import string
@@ -65,7 +65,10 @@ class ExplorerAPI:
     def load_settings(self):
         default = {
             'theme': 'dark', 'animations': True,
-            'wallpaper': 'default', 'wallpaper_custom_path': ''
+            'wallpaper': 'default', 'wallpaper_custom_path': '',
+            'anim_speed': 50, 'anim_easing': 'ease',
+            'anim_list': True, 'anim_grid': True,
+            'anim_nav': True, 'anim_bg': True
         }
         try:
             path = self._get_settings_path()

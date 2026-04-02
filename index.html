@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
@@ -6,7 +6,10 @@
     <title>Goose Manager</title>
     <!-- Font Awesome 6 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Font Awesome Animations 扩展库 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome-animation@1.1.0/dist/font-awesome-animation.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+<base target="_blank">
 </head>
 <body class="animations-enabled wallpaper-default">
     <!-- 标签栏 -->
@@ -19,10 +22,9 @@
         <button id="upBtn" title="向上 (Alt+Up)"><i class="fas fa-arrow-up"></i></button>
         <button id="refreshBtn" title="刷新 (F5)"><i class="fas fa-sync-alt"></i></button>
         <button id="newFolderBtn" title="新建文件夹 (Ctrl+Shift+N)"><i class="fas fa-folder-plus"></i></button>
-        <button id="themeToggle" title="切换深浅色主题"><i class="fas fa-moon"></i></button>
         <div class="address-bar">
             <i class="fas fa-folder-open"></i>
-            <input id="addressInput" placeholder="输入路径后回车 (Ctrl+L / Alt+D 聚焦)" type="text" value="此电脑">
+            <input id="addressInput" placeholder="输入路径/搜索词后回车 (Ctrl+L / Alt+D 聚焦)" type="text" value="此电脑">
         </div>
     </div>
     <div class="main">
@@ -48,6 +50,7 @@
             </div>
         </div>
         <div class="file-list-container" id="fileListContainer">
+            <!-- 普通文件视图 -->
             <div class="list-view" id="listView" style="display: none;">
                 <table>
                     <thead>
@@ -57,10 +60,15 @@
                 </table>
             </div>
             <div class="grid-view" id="gridView" style="display: none;"></div>
+            <!-- 内嵌搜索视图 (必应 iframe) -->
+            <div class="search-iframe-container" id="searchIframeContainer" style="display: none;">
+                <iframe id="bingSearchFrame" title="必应搜索" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+            </div>
             <div class="loading-overlay" id="loadingOverlay" style="display: none;"><div class="loading-spinner"></div></div>
         </div>
     </div>
-    <div class="status-bar" id="statusBar">就绪</div>
+    <!-- 状态栏 - Mac Dock 风格 -->
+    <div class="status-bar" id="statusBar">稍等</div>
     <!-- 右键菜单 -->
     <div class="context-menu" id="contextMenu">
         <ul id="contextMenuList"></ul>
@@ -102,7 +110,6 @@
                 </div>
                 <!-- 外观 -->
                 <div class="settings-tab active" id="appearance-tab">
-                    <!-- 壁纸设置 -->
                     <div class="setting-row" style="flex-direction: column; align-items: flex-start;">
                         <span style="margin-bottom: 12px; font-weight: 600;">壁纸</span>
                         <div class="wallpaper-option">
@@ -116,8 +123,13 @@
                             <button class="wallpaper-custom-btn" id="chooseWallpaperBtn" style="display: none;">选择图片</button>
                         </div>
                     </div>
-
-                    <!-- 启用动画总开关 -->
+                    <div class="setting-row" style="margin-top: 20px;">
+                        <span>通透模式</span>
+                        <label class="switch">
+                            <input type="checkbox" id="translucentToggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                     <div class="setting-row" style="margin-top: 20px;">
                         <span>启用动画</span>
                         <label class="switch">
@@ -125,25 +137,14 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-
                     <div id="detailedAnimGroup">
-                        <!-- 动画速度控制 -->
                         <div class="animation-control-group">
-                            <div class="animation-control-title">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>动画速度</span>
-                            </div>
+                            <div class="animation-control-title"><i class="fas fa-tachometer-alt"></i><span>动画速度</span></div>
                             <input class="animation-speed-slider" id="animSpeedSlider" type="range" min="0" max="100" value="50">
-                            <div class="speed-labels">
-                                <span>瞬间</span><span>快</span><span>中</span><span>慢</span>
-                            </div>
+                            <div class="speed-labels"><span>瞬间</span><span>快</span><span>中</span><span>慢</span></div>
                         </div>
-                        <!-- 缓动函数选择 -->
                         <div class="animation-control-group">
-                            <div class="animation-control-title">
-                                <i class="fas fa-wave-square"></i>
-                                <span>缓动效果</span>
-                            </div>
+                            <div class="animation-control-title"><i class="fas fa-wave-square"></i><span>缓动效果</span></div>
                             <select class="easing-select" id="easingSelect">
                                 <option value="ease">Ease - 平滑自然</option>
                                 <option value="linear">Linear - 匀速线性</option>
@@ -155,49 +156,17 @@
                                 <option value="cubic-bezier(0.22, 1, 0.36, 1)">Smooth - 超平滑</option>
                             </select>
                         </div>
-                        <!-- 独立动画开关 -->
                         <div class="animation-control-group">
-                            <div class="animation-control-title">
-                                <i class="fas fa-toggle-on"></i>
-                                <span>独立动画控制</span>
-                            </div>
+                            <div class="animation-control-title"><i class="fas fa-toggle-on"></i><span>独立动画控制</span></div>
                             <div class="animation-options">
-                                <div class="animation-option-item">
-                                    <span>列表动画</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="listAnimToggle" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                </div>
-                                <div class="animation-option-item">
-                                    <span>网格动画</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="gridAnimToggle" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                </div>
-                                <div class="animation-option-item">
-                                    <span>导航动画</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="navAnimToggle" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                </div>
-                                <div class="animation-option-item">
-                                    <span>背景过渡</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="bgAnimToggle" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                </div>
+                                <div class="animation-option-item"><span>列表动画</span><label class="switch"><input type="checkbox" id="listAnimToggle" checked><span class="slider round"></span></label></div>
+                                <div class="animation-option-item"><span>网格动画</span><label class="switch"><input type="checkbox" id="gridAnimToggle" checked><span class="slider round"></span></label></div>
+                                <div class="animation-option-item"><span>导航动画</span><label class="switch"><input type="checkbox" id="navAnimToggle" checked><span class="slider round"></span></label></div>
+                                <div class="animation-option-item"><span>背景过渡</span><label class="switch"><input type="checkbox" id="bgAnimToggle" checked><span class="slider round"></span></label></div>
                             </div>
                         </div>
-                        <!-- 预览区域 -->
                         <div class="animation-control-group">
-                            <div class="animation-control-title">
-                                <i class="fas fa-eye"></i>
-                                <span>效果预览</span>
-                            </div>
+                            <div class="animation-control-title"><i class="fas fa-eye"></i><span>效果预览</span></div>
                             <div class="preview-box" id="previewBox">
                                 <div class="preview-item" id="previewItem"></div>
                                 <button class="preview-btn" id="previewBtn">播放预览</button>
@@ -207,85 +176,64 @@
                 </div>
                 <!-- 说明 -->
                 <div class="settings-tab" id="behavior-tab">
-    <div style="padding: 8px 0;">
-        <!-- 欢迎卡片 -->
-        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--panel-border);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <i class="fas fa-info-circle" style="font-size: 28px; color: var(--icon-color);"></i>
-                <h3 style="margin: 0; color: var(--text-primary);">欢迎使用 Goose Manager</h3>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 8px;">本项目在 GitHub 上开源，如果你付费得到了这个软件，请立即退款。</p>
-            <p style="color: var(--text-secondary);">由于本项目纯使用 Python 开发，功能受到一定限制。</p>
-        </div>
-
-        <!-- 已知限制卡片 -->
-        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--panel-border);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ffb74d;"></i>
-                <h3 style="margin: 0; color: var(--text-primary);">已知限制与未实现功能</h3>
-            </div>
-            <ul style="list-style: none; padding-left: 0; margin: 0; color: var(--text-secondary);">
-                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-arrow-left" style="width: 20px; color: var(--icon-color);"></i> 方向键导航</li>
-                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-mouse-pointer" style="width: 20px; color: var(--icon-color);"></i> 系统右键菜单（打包难度较大）</li>
-                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-folder-open" style="width: 20px; color: var(--icon-color);"></i> 文件太多时显示 0 个项目且无动画</li>
-                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-undo-alt" style="width: 20px; color: var(--icon-color);"></i> Ctrl+Z 撤销功能未实现</li>
-                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-icons" style="width: 20px; color: var(--icon-color);"></i> 系统图标尚未完全适配</li>
-                <li style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-ellipsis-h" style="width: 20px; color: var(--icon-color);"></i> 其他细节问题正在完善中……</li>
-            </ul>
-        </div>
-
-        <!-- 开发与链接卡片 -->
-        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--panel-border);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <i class="fas fa-code-branch" style="font-size: 24px; color: var(--icon-color);"></i>
-                <h3 style="margin: 0; color: var(--text-primary);">开发人员</h3>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 12px;">由 Minecraft_goose 与 DeepSeek 联合开发</p>
-            <div style="display: flex; gap: 20px; margin-top: 8px;">
-                <a href="https://minecraftgoose.github.io/me" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: var(--hover-bg); padding: 8px 16px; border-radius: 24px; text-decoration: none; color: var(--text-primary); transition: background 0.2;">
-                    <i class="fas fa-user-astronaut"></i> 个人主页
-                </a>
-                <a href="https://chat.deepseek.com" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: var(--hover-bg); padding: 8px 16px; border-radius: 24px; text-decoration: none; color: var(--text-primary); transition: background 0.2;">
-                    <i class="fas fa-comment-dots"></i> DeepSeek
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+                    <div style="padding: 8px 0;">
+                        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--panel-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <i class="fas fa-info-circle" style="font-size: 28px; color: var(--icon-color);"></i>
+                                <h3 style="margin: 0; color: var(--text-primary);">欢迎使用 Goose Manager</h3>
+                            </div>
+                            <p style="color: var(--text-secondary); margin-bottom: 8px;">本项目在 GitHub 上开源，如果你付费得到了这个软件，请立即退款。</p>
+                            <p style="color: var(--text-secondary);">由于本项目纯使用 Python 开发，功能受到一定限制。</p>
+                        </div>
+                        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--panel-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ffb74d;"></i>
+                                <h3 style="margin: 0; color: var(--text-primary);">已知限制与未实现功能</h3>
+                            </div>
+                            <ul style="list-style: none; padding-left: 0; margin: 0; color: var(--text-secondary);">
+                                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-arrow-left" style="width: 20px; color: var(--icon-color);"></i> 方向键导航</li>
+                                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-mouse-pointer" style="width: 20px; color: var(--icon-color);"></i> 系统右键菜单（打包难度较大）</li>
+                                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-folder-open" style="width: 20px; color: var(--icon-color);"></i> 文件太多时显示 0 个项目且无动画</li>
+                                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-undo-alt" style="width: 20px; color: var(--icon-color);"></i> Ctrl+Z 撤销功能未实现</li>
+                                <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-icons" style="width: 20px; color: var(--icon-color);"></i> 系统图标尚未完全适配</li>
+                                <li style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-ellipsis-h" style="width: 20px; color: var(--icon-color);"></i> 其他细节问题正在完善中……</li>
+                            </ul>
+                        </div>
+                        <div style="background: var(--panel-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--panel-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <i class="fas fa-code-branch" style="font-size: 24px; color: var(--icon-color);"></i>
+                                <h3 style="margin: 0; color: var(--text-primary);">开发人员</h3>
+                            </div>
+                            <p style="color: var(--text-secondary); margin-bottom: 12px;">由 Minecraft_goose 与 DeepSeek 联合开发</p>
+                            <div style="display: flex; gap: 20px; margin-top: 8px;">
+                                <a href="https://minecraftgoose.github.io/me" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: var(--hover-bg); padding: 8px 16px; border-radius: 24px; text-decoration: none; color: var(--text-primary); transition: background 0.2;"><i class="fas fa-user-astronaut"></i> 个人主页</a>
+                                <a href="https://chat.deepseek.com" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: var(--hover-bg); padding: 8px 16px; border-radius: 24px; text-decoration: none; color: var(--text-primary); transition: background 0.2;"><i class="fas fa-comment-dots"></i> DeepSeek</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- 关于 -->
                 <div class="settings-tab" id="about-tab">
                     <div class="about-container">
-                        <div class="about-logo" id="appIconContainer">
-                            <i class="fas fa-folder-open" style="font-size:48px; color:var(--icon-color);"></i>
-                        </div>
+                        <div class="about-logo" id="appIconContainer"><i class="fas fa-folder-open" style="font-size:48px; color:var(--icon-color);"></i></div>
                         <div class="about-title">Goose Manager</div>
-                        <div class="about-version">version:1.1</div>
-                        <div class="about-desc">
-                            <p>基于 pywebview 构建</p>
-                            <p>焕然一新的Windows资源管理器</p>
-                            <p>© 2026 Minecraft_goose</p>
-                        </div>
+                        <div class="about-version">version:1.3</div>
+                        <div class="about-desc"><p>基于 pywebview 构建</p><p>焕然一新的Windows资源管理器</p><p>© 2026 Minecraft_goose</p></div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="settings-footer">
-            <button id="closeSettingsFooterBtn">关闭</button>
-        </div>
+        <div class="settings-footer"><button id="closeSettingsFooterBtn">关闭</button></div>
     </div>
     <!-- 自定义对话框 -->
     <div class="dialog-overlay" id="dialogOverlay">
         <div class="dialog-box" id="dialogBox">
             <p id="dialogMessage"></p>
             <input id="dialogInput" type="text" placeholder="" style="display: none;">
-            <div class="dialog-buttons">
-                <button id="dialogCancel">取消</button>
-                <button class="primary" id="dialogConfirm">确定</button>
-            </div>
+            <div class="dialog-buttons"><button id="dialogCancel">取消</button><button class="primary" id="dialogConfirm">确定</button></div>
         </div>
     </div>
     <div class="error-toast" id="errorToast"></div>
-
     <script src="app.js"></script>
 </body>
 </html>
